@@ -1,0 +1,7 @@
+/** 🔁 旧Command互換層：チケット操作の既存入力・実行契約を維持し、統合公開Commandから再利用します。 */
+
+import { SlashCommandBuilder } from "discord.js";
+import type { BotCommand } from "../../../core/client/command-types.js";
+import { CommunityToolsRepository } from "../tools.repository.js";
+const repository = new CommunityToolsRepository();
+export const command: BotCommand = { category: "community", data: new SlashCommandBuilder().setName("ticket").setDescription("問い合わせチケットを管理します").addSubcommand((s) => s.setName("open").setDescription("🎫 問い合わせを開く").addStringOption((o) => o.setName("category").setDescription("カテゴリ").setRequired(true).setMaxLength(30))).addSubcommand((s) => s.setName("close").setDescription("自分のチケットを閉じる").addStringOption((o) => o.setName("id").setDescription("チケットID（表示された受付ID）").setRequired(true))), async execute(interaction) { if (!interaction.guildId) { await interaction.reply({ content: "🏠 サーバー内で使用してください。", ephemeral: true }); return; } if (interaction.options.getSubcommand() === "open") { const id = repository.openTicket(interaction.guildId, interaction.user.id, interaction.options.getString("category", true)); await interaction.reply({ embeds: [{ title: "🎫 チケット受付", description: `受付ID：\`${id.slice(0, 8)}\`\n担当者からの返信をお待ちください。`, color: 0x638c9d }] }); return; } const ok = repository.closeTicket(interaction.options.getString("id", true), interaction.guildId, interaction.user.id); await interaction.reply({ content: ok ? "🎫 チケットを閉じました。" : "🎫 チケットが見つからないか、権限がありません。", ephemeral: true }); } };

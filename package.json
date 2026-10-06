@@ -1,0 +1,32 @@
+{
+  "name": "mabubot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.tests.json --noEmit",
+    "test": "node scripts/run-tests.mjs",
+    "verify:commands": "tsx scripts/verify-commands.ts",
+    "deploy:commands": "tsx scripts/deploy-commands.ts",
+    "check": "npm run typecheck && npm run typecheck:tests && npm test && npm run verify:commands && npm run build"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.1",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

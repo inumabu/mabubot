@@ -1,0 +1,70 @@
+name: CI 🚀
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read # 📖 CIはリポジトリを読むだけにし、権限を最小化します。
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 🧭 CIの流れ：環境確認 → 依存関係 → 型チェック → テスト → コマンド検証 → ビルドの順で失敗点を切り分けます。
+jobs:
+  verify:
+    name: 🧪 検証・テスト・ビルド
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: true
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      # 🗃️ Node.js 22系のSQLite実験機能を、ローカルのnpm testと同じ条件で実行します。
+      NODE_OPTIONS: --experimental-sqlite
+    steps:
+      # 🧪 失敗時の確認：最初に失敗したStepを起点に、そのStepの最初の具体的なエラーを確認します。
+      - name: 📥 リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: 🟢 Node.jsを準備
+        uses: actions/setup-node@v4
+        with:
+          # 🟢 node:sqliteの互換性を固定し、開発環境とCIの差を減らします。
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: 🔎 Node.js / npm のバージョン確認
+        run: |
+          echo "🟢 Node.js"
+          node --version
+          echo "📦 npm"
+          npm --version
+
+      - name: 📦 依存関係をインストール
+        run: npm ci
+
+      - name: 🧹 差分・空白をチェック
+        run: git diff --check
+
+      - name: 🧩 アプリの型をチェック
+        run: npm run typecheck
+
+      - name: 🧪 テストコードの型をチェック
+        run: npm run typecheck:tests
+
+      - name: ✅ 自動テストを実行
+        run: npm test
+
+      - name: 📋 Discordコマンドを検証
+        run: npm run verify:commands
+
+      - name: 🔨 本番ビルドを確認
+        run: npm run build
+
+      - name: 🎉 CI完了
+        if: ${{ success() }}
+        run: echo "🎉 すべてのCIチェックに成功しました！"

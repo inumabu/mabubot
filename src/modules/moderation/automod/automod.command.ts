@@ -1,0 +1,7 @@
+/** 🔁 旧Command互換層：AutoMod操作の既存入力・実行契約を維持し、統合公開Commandから再利用します。 */
+
+import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import type { BotCommand } from "../../../core/client/command-types.js";
+import { CommunityToolsRepository } from "../../community/tools.repository.js";
+const repository = new CommunityToolsRepository();
+export const command: BotCommand = { category: "moderation", data: new SlashCommandBuilder().setName("automod").setDescription("AutoModを設定します").setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild).addSubcommand((s) => s.setName("enable").setDescription("有効化")).addSubcommand((s) => s.setName("disable").setDescription("無効化")).addSubcommand((s) => s.setName("word").setDescription("禁止語を設定").addStringOption((o) => o.setName("words").setDescription("カンマ区切り").setRequired(true))), async execute(interaction) { if (!interaction.guildId || !interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) { await interaction.reply({ content: "🛡️ Manage Server権限が必要です。", ephemeral: true }); return; } const sub = interaction.options.getSubcommand(); if (sub === "enable" || sub === "disable") repository.set(interaction.guildId, "automod.enabled", String(sub === "enable")); if (sub === "word") repository.set(interaction.guildId, "automod.words", interaction.options.getString("words", true).split(",").map((w) => w.trim()).filter(Boolean).join(",")); await interaction.reply({ content: `🛡️ AutoMod ${sub === "enable" ? "ON" : sub === "disable" ? "OFF" : "禁止語を更新"}`, ephemeral: true }); } };
